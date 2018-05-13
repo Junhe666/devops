@@ -117,3 +117,70 @@ docker rmi $(docker images -q)
 ``
 docker rmi --force $(docker images | grep doss-api | awk '{print $3}')
 ``
+
+查看容器进程
+
+docker top可以查看运行容器中运行的进程 
+一般用于查看后台型，交互型的需要到其他终端下查看 
+首先创建一个后台型容器并处于始终睡眠 
+``
+docker run -d --name=daemon_top ubuntu /bin/bash -c 'while true;do sleep 1;done;'
+ 
+docker ps查看一下运行的容器 
+docker top daemon_top将看到如下
+ 
+UID PID PPID C STIME TTY TIME CMD 
+root 22858 22848 0 22:10 ? 00:00:00 /bin/bash -c while true;do sleep 1; done 
+root 22915 22858 0 22:10 ? 00:00:00 sleep 1 
+``
+这里能看到两个进程while和sleep（这里我听说shell中的一条语句就是一个进程？？不知道是不是真的，下次可以试试？？？）
+
+查看容器信息
+
+docker inspect 容器名/容器ID可以查看容器的配置信息：容器名，环境变量， 运行命令， 主机配置，网络配置，数据卷配置。 
+主要还是需要了解这些内容的细节。（这个接下来再具体了解。） 
+-f或者–format格式化标识， 
+查询容器的运行状态： 
+``
+docker inspect --format='{{.State.Running}}' 容器名 
+``
+
+查询容器的IP的地址 
+docker inspect --format='{{.NetworkSettings.IPAddress}}' 容器名
+
+容器内执行命令
+我们通常可能会在一个正在运行的容器中启动另一个程序（并发启动）会用到docker exec命令 
+执行命令可以创建交互型和后台型
+ 
+-d：后台型 
+-it：标准输入和关联终端 
+
+docker exec -d 容器名 touch /tmp/new_file 
+
+这个命令就是要运行一个后台任务，在 
+/tmp下创建一个名为new_file的文件 
+docker exec -it 容器名 /bin/bash 
+
+这个命令都可以用交互型和后台型容器。 
+如果用于后台型容器就可以为后台型容器关联一个终端。 
+（这里可以想想前台程序和后台程序的区别？？？？）
+
+容器的导入和导出
+
+docker export命令提供一种容器持久化的方式。我们在运行了容器后修改配置等等操作后，我们用
+
+docker export 命令将容器导出成文件，这样我们就可以进行分享。
+ 
+docker export 容器名 > 文件名 
+
+导出后我们当然也可以将文件导入作为镜像 
+cat 文件名 | docker import - 镜像名:标记 
+
+import会将从标准输入 读取容器内容。 
+
+import也可以从网络上导入容器 
+
+docker import url res:tag(镜像名：标记) 
+
+思考？？？ 
+res:tag具体对应什么可以去找一个例子试试。
